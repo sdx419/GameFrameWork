@@ -34,10 +34,11 @@ namespace AssetBundleRes
         }
     }
 
-    public class BundleManager : SingleMono<BundleManager>
+    public class BundleManager : SingleManager<BundleManager>, IManager
     {
         private Dictionary<string, LoadedAssetBundle> m_loadedAssetBundles = new();
         private Dictionary<string, BundleRequest> m_loadingRequest = new();
+        private HashSet<string> m_requestKeys = new();
         private List<AssetLoadOperation> m_InProcessOperations = new();
 
         private AssetBundle m_manifestBundle;
@@ -45,18 +46,16 @@ namespace AssetBundleRes
 
         private static string m_manifestBundlePath = Application.streamingAssetsPath + "/assets/assets";
         private static string m_manifestPath = m_manifestBundlePath + "/AssetBundleManifest";
+        private static string m_assetBundlePath = Application.streamingAssetsPath + "/assets/";
 
         public void Init()
         {
             Debug.LogError($"bundleManager init");
+            m_manifestBundle = AssetBundle.LoadFromFile(m_manifestBundlePath);
+            m_manifest = m_manifestBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
             // StartCoroutine(init());
         }
-
-        private void Awake()
-        {
-            StartCoroutine(init());
-        }
-
+        
         public void Test()
         {
             Debug.LogError("Test");
@@ -64,14 +63,15 @@ namespace AssetBundleRes
 
         public IEnumerator init()
         {
-            var bundleRequest = AssetBundle.LoadFromFileAsync(m_manifestBundlePath);
+            var bundleRequest = AssetBundle.LoadFromFile(m_manifestBundlePath);
             yield return bundleRequest;
-            m_manifestBundle = bundleRequest.assetBundle;
+            m_manifestBundle = AssetBundle.LoadFromFile(m_manifestBundlePath);
             m_manifest = m_manifestBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
         }
 
         public AssetLoadOperation LoadAssetAsync<T>(string bundleName, string assetName)
         {
+            bundleName = m_assetBundlePath + bundleName;
             LoadAssetBundleAsync(bundleName);
             var operation = new AssetLoadOperation(bundleName, assetName, typeof(T));
             m_InProcessOperations.Add(operation);
@@ -91,6 +91,9 @@ namespace AssetBundleRes
 
                 if (m_loadingRequest.ContainsKey(bundleName))
                     m_loadingRequest.Remove(bundleName);
+
+                if (m_requestKeys.Contains(bundleName))
+                    m_requestKeys.Remove(bundleName);
             }
         }
 
@@ -134,13 +137,17 @@ namespace AssetBundleRes
             var request = AssetBundle.LoadFromFileAsync(bundleName);
             BundleRequest bundleRequest = new BundleRequest(request, bundleName);
             m_loadingRequest.Add(bundleName, bundleRequest);
+            m_requestKeys.Add(bundleName);
         }
 
         public void Update()
         {
-            foreach (var pair in m_loadingRequest)
+            if (m_requestKeys.Count > 0)
             {
-                pair.Value.Update();
+                foreach (var key in m_requestKeys)
+                {
+                    m_loadingRequest[key].Update();
+                }
             }
 
             foreach (var option in m_InProcessOperations)

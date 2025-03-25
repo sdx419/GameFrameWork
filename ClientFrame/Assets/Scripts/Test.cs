@@ -17,11 +17,24 @@ public class Test : MonoBehaviour
             go.transform.SetParent(transform);
             go.name = "prefab1";
         });
+        
+        AssetLoadManager.Instance.LoadAssetAsync<GameObject>("prefab", "Prefab1", (asset) =>
+        {
+            GameObject prefab = asset.GetAsset<GameObject>();
+            GameObject go = Instantiate(prefab);
+            go.transform.SetParent(transform);
+            go.name = "prefab1_1";
+        });
     }
+
+    // public GameObject LoadGameObject(string bundleName, string assetName)
+    // {
+    //     
+    // }
     
     IEnumerator LoadBundleAsync()
     {
-        string bundlePath = Application.streamingAssetsPath + "/AssetBundles/Windows/prefab";
+        string bundlePath = Application.streamingAssetsPath + "/assets/prefab";
         AssetBundleCreateRequest request = AssetBundle.LoadFromFileAsync(bundlePath);
         yield return request;
 
