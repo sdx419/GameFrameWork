@@ -12,6 +12,7 @@ public class BuildAssetBundles
         string outputPath = Path.Combine(Application.streamingAssetsPath, "assets");
         if (!Directory.Exists(outputPath))
             Directory.CreateDirectory(outputPath);
+
         
         BuildPipeline.BuildAssetBundles(outputPath, BuildAssetBundleOptions.ChunkBasedCompression,
             BuildTarget.StandaloneWindows64);
