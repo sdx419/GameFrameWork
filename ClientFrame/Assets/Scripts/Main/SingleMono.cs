@@ -8,6 +8,7 @@ namespace Main
         {
             get
             {
+                
                 if (m_instance == null)
                 {
                     GameObject go = GameObject.Find(typeof(T).Name) ?? new GameObject();
