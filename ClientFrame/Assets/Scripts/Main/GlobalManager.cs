@@ -7,7 +7,6 @@ namespace Main
 {
     public class GlobalManager : SingleMono<GlobalManager>
     {
-
         private Dictionary<string, IManager> m_singleManagers = new();
 
         public T GetManagerSingleInstance<T>() where T : class, IManager, new()
