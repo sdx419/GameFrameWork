@@ -25,6 +25,7 @@ public class Test : MonoBehaviour
             go.transform.SetParent(transform);
             go.name = "prefab1_1";
         });
+        
     }
 
     // public GameObject LoadGameObject(string bundleName, string assetName)
