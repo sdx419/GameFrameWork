@@ -24,8 +24,6 @@ public class Test : MonoBehaviour
             GameObject go = Instantiate(prefab);
             go.transform.SetParent(transform);
             go.name = "prefab1_1";
-            
-            
         });
         
     }
