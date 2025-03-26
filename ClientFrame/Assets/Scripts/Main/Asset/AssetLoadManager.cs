@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Main;
-using UnityEngine;
 
 namespace AssetBundleRes
 {
@@ -19,20 +18,21 @@ namespace AssetBundleRes
             if (m_assets.ContainsKey(fullName))
             {
                 Asset asset = m_assets[fullName];
-                if (asset.asset == null)
-                {
-                    asset.LoadAssetAsync<T>(bundleName, assetName);
-                }
-
-                asset.onComplete += callback;
+                asset.OnComplete += callback;
+                asset.LoadAssetAsync<T>(bundleName, assetName);
             }
             else
             {
                 Asset asset = new Asset();
-                asset.LoadAssetAsync<T>(bundleName, assetName);
-                asset.onComplete += callback;
+                asset.OnComplete += callback;
                 m_assets.Add(fullName, asset);
+                asset.LoadAssetAsync<T>(bundleName, assetName);
             }
+        }
+
+        public void RemoveAsset(string assetName)
+        {
+            m_assets[assetName] = null;
         }
 
         public void Update()

@@ -5,6 +5,9 @@ namespace AssetBundleRes
     public class BundleRequest
     {
         private AssetBundleCreateRequest m_request;
+        
+        public string BundleName=> m_bundleName;
+        
         private string m_bundleName;
 
         public BundleRequest(AssetBundleCreateRequest request, string bundleName)

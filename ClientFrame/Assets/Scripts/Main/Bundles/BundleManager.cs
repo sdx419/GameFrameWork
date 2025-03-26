@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Main;
-using UnityEditor;
 using UnityEngine;
 
 namespace AssetBundleRes
@@ -19,8 +16,7 @@ namespace AssetBundleRes
         {
             m_bundle = bundle;
         }
-
-
+        
         public void Retain()
         {
         }
@@ -37,8 +33,7 @@ namespace AssetBundleRes
     public class BundleManager : SingleManager<BundleManager>, IManager
     {
         private Dictionary<string, LoadedAssetBundle> m_loadedAssetBundles = new();
-        private Dictionary<string, BundleRequest> m_loadingRequest = new();
-        private HashSet<string> m_requestKeys = new();
+        private List<BundleRequest> m_loadingRequest = new();
         private List<AssetLoadOperation> m_InProcessOperations = new();
 
         private AssetBundle m_manifestBundle;
@@ -53,22 +48,8 @@ namespace AssetBundleRes
             Debug.LogError($"bundleManager init");
             m_manifestBundle = AssetBundle.LoadFromFile(m_manifestBundlePath);
             m_manifest = m_manifestBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
-            // StartCoroutine(init());
         }
         
-        public void Test()
-        {
-            Debug.LogError("Test");
-        }
-
-        public IEnumerator init()
-        {
-            var bundleRequest = AssetBundle.LoadFromFile(m_manifestBundlePath);
-            yield return bundleRequest;
-            m_manifestBundle = AssetBundle.LoadFromFile(m_manifestBundlePath);
-            m_manifest = m_manifestBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
-        }
-
         public AssetLoadOperation LoadAssetAsync<T>(string bundleName, string assetName)
         {
             bundleName = m_assetBundlePath + bundleName;
@@ -88,12 +69,6 @@ namespace AssetBundleRes
             {
                 LoadedAssetBundle _bundle = new LoadedAssetBundle(bundle);
                 m_loadedAssetBundles.Add(bundleName, _bundle);
-
-                if (m_loadingRequest.ContainsKey(bundleName))
-                    m_loadingRequest.Remove(bundleName);
-
-                if (m_requestKeys.Contains(bundleName))
-                    m_requestKeys.Remove(bundleName);
             }
         }
 
@@ -131,29 +106,47 @@ namespace AssetBundleRes
 
         private void LoadAssetBundleAsyncInternal(string bundleName)
         {
-            if (m_loadedAssetBundles.ContainsKey(bundleName) || m_loadingRequest.ContainsKey(bundleName))
+            if (m_loadedAssetBundles.ContainsKey(bundleName))
+            {
+                m_loadedAssetBundles[bundleName].Retain();
                 return;
+            }
+            
+            // 注意！
+            // 已经请求加载bundle，但是此bundle尚未加载完成，则新增加载bundle的请求
+            // if (m_loadingRequest.Any(item => item.BundleName == bundleName))
+                // return;
 
             var request = AssetBundle.LoadFromFileAsync(bundleName);
             BundleRequest bundleRequest = new BundleRequest(request, bundleName);
-            m_loadingRequest.Add(bundleName, bundleRequest);
-            m_requestKeys.Add(bundleName);
+            m_loadingRequest.Add(bundleRequest);
         }
 
         public void Update()
         {
-            if (m_requestKeys.Count > 0)
+            for (var i = m_loadingRequest.Count - 1; i >= 0 ; i--)
             {
-                foreach (var key in m_requestKeys)
-                {
-                    m_loadingRequest[key].Update();
-                }
+                var request = m_loadingRequest[i];
+                request.Update();
+
+                if (request.IsDone())
+                    m_loadingRequest.RemoveAt(i);
             }
 
-            foreach (var option in m_InProcessOperations)
+            for (var i = m_InProcessOperations.Count - 1; i >= 0; i--)
             {
-                option.Update();
+                var bundleOption = m_InProcessOperations[i];
+                bundleOption.Update();
+                
+                if (bundleOption.IsDone)
+                    m_InProcessOperations.RemoveAt(i);
             }
         }
+
+        // public void UnloadBundle(string bundleName)
+        // {
+        //     if(!m_loadedAssetBundles.ContainsKey(bundleName))
+        //         return;
+        // }
     }
 }

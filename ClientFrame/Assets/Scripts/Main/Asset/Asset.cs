@@ -1,6 +1,4 @@
 ﻿using System;
-using UnityEngine;
-// using Object = UnityEngine.Object;
 
 namespace AssetBundleRes
 {
@@ -8,32 +6,41 @@ namespace AssetBundleRes
     {
         private string m_bundleName;
         private string m_assetName;
-        public UnityEngine.Object asset;
-        public AssetLoadOperation m_Option;
+        private UnityEngine.Object m_asset;
+        private AssetLoadOperation m_option;
 
-        public Action<Asset> onComplete;
-
+        private int m_refCount = 0;
         private bool m_loading = false;
+
+        public event Action<Asset> OnComplete;
 
         public void LoadAssetAsync<T>(string bundleName, string assetName)
         {
+            m_refCount++;
+            
             m_bundleName = bundleName;
             m_assetName = assetName;
-            m_Option = BundleManager.Instance.LoadAssetAsync<T>(bundleName, assetName);
+            m_option ??= BundleManager.Instance.LoadAssetAsync<T>(bundleName, assetName);
             m_loading = true;
         }
-
-        public void LoadAssetAsyncInternal()
-        {
-            if(m_loading)
-                return;
-
-            m_Option = BundleManager.Instance.LoadAssetAsync<UnityEngine.Object>(m_bundleName, m_assetName);
-        }
-
+        
         public T GetAsset<T>() where T : UnityEngine.Object
         {
-            return asset as T;
+            return m_asset as T;
+        }
+
+        public void Release()
+        {
+            m_refCount--;
+            if (m_refCount <= 0)
+            {
+                m_asset = null;
+                m_option = null;
+                AssetLoadManager.Instance.RemoveAsset(m_bundleName + m_assetName);
+                BundleManager.Instance.UnloadBundle(m_bundleName);
+                //BundleManager.Instance.GetAssetBundle(m_bundleName, out var bundle);
+                //bundle.Release();
+            }
         }
         
         public void Update()
@@ -41,10 +48,11 @@ namespace AssetBundleRes
             if(!m_loading)
                 return;
             
-            if (m_Option is { IsDone: true })
+            if (m_option is { IsDone: true })
             {
-                asset = m_Option.GetAsset();
-                onComplete?.Invoke(this);
+                m_asset = m_option.GetAsset();
+                OnComplete?.Invoke(this);
+                OnComplete = null;
                 m_loading = false;
             }
         }
