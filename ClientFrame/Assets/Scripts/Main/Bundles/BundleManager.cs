@@ -143,10 +143,10 @@ namespace AssetBundleRes
             }
         }
 
-        // public void UnloadBundle(string bundleName)
-        // {
-        //     if(!m_loadedAssetBundles.ContainsKey(bundleName))
-        //         return;
-        // }
+        public void UnloadBundle(string bundleName)
+        {
+            if(!m_loadedAssetBundles.ContainsKey(bundleName))
+                return;
+        }
     }
 }

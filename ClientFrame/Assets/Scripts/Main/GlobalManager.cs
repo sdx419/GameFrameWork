@@ -22,11 +22,6 @@ namespace Main
             return manager;
         }
 
-        [ContextMenu("Test")]
-        public void Test()
-        {
-            BundleManager.Instance.Test();
-        }
 
         private void Update()
         {
