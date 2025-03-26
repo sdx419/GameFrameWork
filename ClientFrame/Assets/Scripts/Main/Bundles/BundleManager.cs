@@ -15,10 +15,12 @@ namespace AssetBundleRes
         public LoadedAssetBundle(AssetBundle bundle)
         {
             m_bundle = bundle;
+            m_refCount = 1;
         }
         
         public void Retain()
         {
+            m_refCount++;
         }
 
         private void unload()
@@ -27,6 +29,12 @@ namespace AssetBundleRes
 
         public void Release()
         {
+            m_refCount--;
+            if (m_refCount == 0)
+            {
+                // 此处需检查是否此包是否为其他包的依赖
+                
+            }
         }
     }
 
@@ -147,6 +155,8 @@ namespace AssetBundleRes
         {
             if(!m_loadedAssetBundles.ContainsKey(bundleName))
                 return;
+            
+            m_loadedAssetBundles[bundleName].Release();
         }
     }
 }
