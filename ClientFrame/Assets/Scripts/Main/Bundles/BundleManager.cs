@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Main;
 using UnityEngine;
@@ -7,13 +8,17 @@ namespace AssetBundleRes
 {
     public class LoadedAssetBundle
     {
-        public AssetBundle Bundle => m_bundle;
+        private string m_bundleName;
         
+        public AssetBundle Bundle => m_bundle;
         private AssetBundle m_bundle;
         private int m_refCount;
 
-        public LoadedAssetBundle(AssetBundle bundle)
+        public event Action OnUnload;
+
+        public LoadedAssetBundle(string bundleName, AssetBundle bundle)
         {
+            m_bundleName = bundleName;
             m_bundle = bundle;
             m_refCount = 1;
         }
@@ -25,15 +30,19 @@ namespace AssetBundleRes
 
         private void unload()
         {
+            m_bundle.Unload(true);
+            OnUnload?.Invoke();
+            OnUnload = null;
         }
 
         public void Release()
         {
             m_refCount--;
+            // 当引用计数为0时，必定已无其他bundle对此bundle有依赖，可以安全卸载
             if (m_refCount == 0)
             {
-                // 此处需检查是否此包是否为其他包的依赖
-                
+                unload();
+                BundleManager.Instance.UnloadBundleDependencies(m_bundleName);
             }
         }
     }
@@ -43,21 +52,22 @@ namespace AssetBundleRes
         private Dictionary<string, LoadedAssetBundle> m_loadedAssetBundles = new();
         private List<BundleRequest> m_loadingRequest = new();
         private List<AssetLoadOperation> m_InProcessOperations = new();
+        private Dictionary<string, string[]> m_bundleDependencies = new();
 
         private AssetBundle m_manifestBundle;
         private AssetBundleManifest m_manifest;
 
         private static string m_manifestBundlePath = Application.streamingAssetsPath + "/assets/assets";
-        private static string m_manifestPath = m_manifestBundlePath + "/AssetBundleManifest";
         private static string m_assetBundlePath = Application.streamingAssetsPath + "/assets/";
 
         public void Init()
         {
-            Debug.LogError($"bundleManager init");
             m_manifestBundle = AssetBundle.LoadFromFile(m_manifestBundlePath);
             m_manifest = m_manifestBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
         }
-        
+
+        #region LoadAsset
+
         public AssetLoadOperation LoadAssetAsync<T>(string bundleName, string assetName)
         {
             bundleName = m_assetBundlePath + bundleName;
@@ -75,8 +85,9 @@ namespace AssetBundleRes
             }
             else
             {
-                LoadedAssetBundle _bundle = new LoadedAssetBundle(bundle);
-                m_loadedAssetBundles.Add(bundleName, _bundle);
+                LoadedAssetBundle loadedBundle = new LoadedAssetBundle(bundleName, bundle);
+                loadedBundle.OnUnload += () => m_loadedAssetBundles.Remove(bundleName);
+                m_loadedAssetBundles.Add(bundleName, loadedBundle);
             }
         }
 
@@ -87,8 +98,7 @@ namespace AssetBundleRes
 
         public bool CheckBundleDependenciesLoaded(string bundleName)
         {
-            string[] dependencies = m_manifest.GetAllDependencies(bundleName);
-            foreach (var dependency in dependencies)
+            foreach (var dependency in m_bundleDependencies[bundleName])
             {
                 if (!m_loadedAssetBundles.ContainsKey(dependency))
                     return false;
@@ -105,8 +115,11 @@ namespace AssetBundleRes
 
         public void LoadBundleDependenciesAsync(string bundleName)
         {
-            string[] dependencies = m_manifest.GetAllDependencies(bundleName);
-            foreach (var dependency in dependencies)
+            if (!m_bundleDependencies.ContainsKey(bundleName))
+            {
+                m_bundleDependencies[bundleName] = m_manifest.GetAllDependencies(bundleName);
+            }
+            foreach (var dependency in m_bundleDependencies[bundleName])
             {
                 LoadAssetBundleAsyncInternal(dependency);
             }
@@ -130,6 +143,35 @@ namespace AssetBundleRes
             m_loadingRequest.Add(bundleRequest);
         }
 
+        public void UnloadBundleDependencies(string bundleName)
+        {
+            string[] dependencies = m_bundleDependencies[bundleName];
+            foreach (var dependency in dependencies)
+            {
+                if (!m_loadedAssetBundles.ContainsKey(dependency))
+                {
+                    Debug.LogError($"bundle {dependency} has been unloaded before unloading bundle {bundleName}");
+                    continue;
+                }
+                
+                m_loadedAssetBundles[dependency].Release();
+            }
+        }
+        
+        #endregion
+
+        #region UnloadAsset
+
+        public void UnloadBundle(string bundleName)
+        {
+            if(!m_loadedAssetBundles.ContainsKey(bundleName))
+                return;
+
+            m_loadedAssetBundles[bundleName].Release();
+        }
+
+        #endregion
+
         public void Update()
         {
             for (var i = m_loadingRequest.Count - 1; i >= 0 ; i--)
@@ -150,14 +192,6 @@ namespace AssetBundleRes
                     m_InProcessOperations.RemoveAt(i);
             }
         }
-
-        public void UnloadBundle(string bundleName)
-        {
-            if(!m_loadedAssetBundles.ContainsKey(bundleName))
-                return;
-            
-            
-            m_loadedAssetBundles[bundleName].Release();
-        }
+        
     }
 }

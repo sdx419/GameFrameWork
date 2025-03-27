@@ -38,8 +38,6 @@ namespace AssetBundleRes
                 m_option = null;
                 AssetLoadManager.Instance.RemoveAsset(m_bundleName + m_assetName);
                 BundleManager.Instance.UnloadBundle(m_bundleName);
-                //BundleManager.Instance.GetAssetBundle(m_bundleName, out var bundle);
-                //bundle.Release();
             }
         }
         
