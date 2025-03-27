@@ -24,7 +24,6 @@ public class UIRoot : MonoBehaviour
     
     void Start()
     {
-        UIManager.Instance.RegisterUIRoot(this);
     }
 
     [ContextMenu("testShow")]

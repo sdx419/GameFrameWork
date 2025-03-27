@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Main;
+using UnityEditor;
+using Object = UnityEngine.Object;
 
 namespace AssetBundleRes
 {
