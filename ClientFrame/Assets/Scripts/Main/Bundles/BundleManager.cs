@@ -70,7 +70,6 @@ namespace AssetBundleRes
 
         public AssetLoadOperation LoadAssetAsync<T>(string bundleName, string assetName)
         {
-            bundleName = m_assetBundlePath + bundleName;
             LoadAssetBundleAsync(bundleName);
             var operation = new AssetLoadOperation(bundleName, assetName, typeof(T));
             m_InProcessOperations.Add(operation);
@@ -121,7 +120,7 @@ namespace AssetBundleRes
             }
             foreach (var dependency in m_bundleDependencies[bundleName])
             {
-                LoadAssetBundleAsyncInternal(dependency);
+                LoadAssetBundleAsync(dependency);
             }
         }
 
@@ -138,7 +137,7 @@ namespace AssetBundleRes
             // if (m_loadingRequest.Any(item => item.BundleName == bundleName))
                 // return;
 
-            var request = AssetBundle.LoadFromFileAsync(bundleName);
+            var request = AssetBundle.LoadFromFileAsync(m_assetBundlePath + bundleName);
             BundleRequest bundleRequest = new BundleRequest(request, bundleName);
             m_loadingRequest.Add(bundleRequest);
         }

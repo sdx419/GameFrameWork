@@ -32,7 +32,7 @@ namespace AssetBundleRes
 
         public void RemoveAsset(string assetName)
         {
-            m_assets[assetName] = null;
+            m_assets.Remove(assetName);
         }
 
         public void Update()
