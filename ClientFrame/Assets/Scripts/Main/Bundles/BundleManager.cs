@@ -156,6 +156,7 @@ namespace AssetBundleRes
             if(!m_loadedAssetBundles.ContainsKey(bundleName))
                 return;
             
+            
             m_loadedAssetBundles[bundleName].Release();
         }
     }
