@@ -20,7 +20,7 @@ namespace AssetBundleRes
             
             m_bundleName = bundleName;
             m_assetName = assetName;
-            m_option ??= BundleManager.Instance.LoadAssetAsync<T>(bundleName, assetName);
+            m_option ??= BundleManager.Instance.LoadAssetAsync<T>(bundleName, assetName) as AssetLoadOperation;
             m_loading = true;
         }
         
@@ -46,7 +46,7 @@ namespace AssetBundleRes
             if(!m_loading)
                 return;
             
-            if (m_option is { IsDone: true })
+            if (m_option != null && m_option.IsDone())
             {
                 m_asset = m_option.GetAsset();
                 OnComplete?.Invoke(this);

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Main;
+using UnityEditor;
 using UnityEngine;
 
 namespace AssetBundleRes
@@ -9,7 +10,7 @@ namespace AssetBundleRes
     public class LoadedAssetBundle
     {
         private string m_bundleName;
-        
+
         public AssetBundle Bundle => m_bundle;
         private AssetBundle m_bundle;
         private int m_refCount;
@@ -22,7 +23,7 @@ namespace AssetBundleRes
             m_bundle = bundle;
             m_refCount = 1;
         }
-        
+
         public void Retain()
         {
             m_refCount++;
@@ -51,7 +52,7 @@ namespace AssetBundleRes
     {
         private Dictionary<string, LoadedAssetBundle> m_loadedAssetBundles = new();
         private List<BundleRequest> m_loadingRequest = new();
-        private List<AssetLoadOperation> m_InProcessOperations = new();
+        private List<ILoadOption> m_InProcessOperations = new();
         private Dictionary<string, string[]> m_bundleDependencies = new();
 
         private AssetBundle m_manifestBundle;
@@ -59,6 +60,14 @@ namespace AssetBundleRes
 
         private static string m_manifestBundlePath = Application.streamingAssetsPath + "/assets/assets";
         private static string m_assetBundlePath = Application.streamingAssetsPath + "/assets/";
+
+        public static bool UseAssetDataInEditor
+        {
+            get => m_useAssetDataInEditor;
+            set { }
+        }
+
+        private static bool m_useAssetDataInEditor;
 
         public void Init()
         {
@@ -68,8 +77,24 @@ namespace AssetBundleRes
 
         #region LoadAsset
 
-        public AssetLoadOperation LoadAssetAsync<T>(string bundleName, string assetName)
+        public ILoadOption LoadAssetAsync<T>(string bundleName, string assetName)
         {
+#if UNITY_EDITOR
+            if (UseAssetDataInEditor)
+            {
+                string[] paths = AssetDatabase.GetAssetPathsFromAssetBundleAndAssetName(bundleName, assetName);
+                if (paths.Length <= 0)
+                {
+                    Debug.LogError($"Error bundleName {bundleName} or error assetName {assetName}");
+                    return null;
+                }
+
+                var asset = AssetDatabase.LoadAssetAtPath(paths[0], typeof(T));
+                var option = new AssetLoadOptionEditor(asset);
+                m_InProcessOperations.Add(option);
+                return option;
+            }
+#endif
             LoadAssetBundleAsync(bundleName);
             var operation = new AssetLoadOperation(bundleName, assetName, typeof(T));
             m_InProcessOperations.Add(operation);
@@ -118,6 +143,7 @@ namespace AssetBundleRes
             {
                 m_bundleDependencies[bundleName] = m_manifest.GetAllDependencies(bundleName);
             }
+
             foreach (var dependency in m_bundleDependencies[bundleName])
             {
                 LoadAssetBundleAsync(dependency);
@@ -131,11 +157,11 @@ namespace AssetBundleRes
                 m_loadedAssetBundles[bundleName].Retain();
                 return;
             }
-            
+
             // 注意！
             // 已经请求加载bundle，但是此bundle尚未加载完成，则新增加载bundle的请求
             // if (m_loadingRequest.Any(item => item.BundleName == bundleName))
-                // return;
+            // return;
 
             var request = AssetBundle.LoadFromFileAsync(m_assetBundlePath + bundleName);
             BundleRequest bundleRequest = new BundleRequest(request, bundleName);
@@ -152,18 +178,18 @@ namespace AssetBundleRes
                     Debug.LogError($"bundle {dependency} has been unloaded before unloading bundle {bundleName}");
                     continue;
                 }
-                
+
                 m_loadedAssetBundles[dependency].Release();
             }
         }
-        
+
         #endregion
 
         #region UnloadAsset
 
         public void UnloadBundle(string bundleName)
         {
-            if(!m_loadedAssetBundles.ContainsKey(bundleName))
+            if (!m_loadedAssetBundles.ContainsKey(bundleName))
                 return;
 
             m_loadedAssetBundles[bundleName].Release();
@@ -173,7 +199,7 @@ namespace AssetBundleRes
 
         public void Update()
         {
-            for (var i = m_loadingRequest.Count - 1; i >= 0 ; i--)
+            for (var i = m_loadingRequest.Count - 1; i >= 0; i--)
             {
                 var request = m_loadingRequest[i];
                 request.Update();
@@ -186,11 +212,10 @@ namespace AssetBundleRes
             {
                 var bundleOption = m_InProcessOperations[i];
                 bundleOption.Update();
-                
-                if (bundleOption.IsDone)
+
+                if (bundleOption.IsDone())
                     m_InProcessOperations.RemoveAt(i);
             }
         }
-        
     }
 }

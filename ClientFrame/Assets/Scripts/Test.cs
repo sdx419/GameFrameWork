@@ -1,6 +1,9 @@
 using System.Collections;
+using System.IO;
 using AssetBundleRes;
+using OpenCover.Framework.Model;
 using UnityEngine;
+using File = System.IO.File;
 
 public class Test : MonoBehaviour
 {
@@ -14,7 +17,7 @@ public class Test : MonoBehaviour
             go.transform.SetParent(transform);
             go.name = "prefab1";
         });
-        
+
         AssetLoadManager.Instance.LoadAssetAsync<GameObject>("prefab", "Prefab1", (asset) =>
         {
             GameObject prefab = asset.GetAsset<GameObject>();
@@ -28,7 +31,19 @@ public class Test : MonoBehaviour
     // {
     //     
     // }
-    
+
+    [ContextMenu("testWrite")]
+    public void test()
+    {
+        string path = Application.dataPath.Replace("/Assets", "/Res/");
+        if (!Directory.Exists(path))
+            Directory.CreateDirectory(path);
+
+        string filePath = path + "test.json";
+
+        File.WriteAllText(filePath, "11111");
+    }
+
     IEnumerator LoadBundleAsync()
     {
         string bundlePath = Application.streamingAssetsPath + "/assets/prefab";

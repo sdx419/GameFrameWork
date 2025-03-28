@@ -4,7 +4,16 @@ using Object = UnityEngine.Object;
 
 namespace AssetBundleRes
 {
-    public class AssetLoadOperation
+    public interface ILoadOption
+    {
+        public bool IsDone();
+
+        public void Update();
+        
+        public Object GetAsset();
+    }
+    
+    public class AssetLoadOperation : ILoadOption
     {
         public string m_bundleName;
         private string m_assetName;
@@ -13,8 +22,6 @@ namespace AssetBundleRes
         private AssetBundleRequest m_request;
         private Object m_asset;
         private bool m_isDone = false;
-
-        public bool IsDone => m_isDone;
         
         public AssetLoadOperation(string bundleName, string assetName, Type type)
         {
@@ -23,6 +30,11 @@ namespace AssetBundleRes
             m_type = type;
         }
 
+        public bool IsDone()
+        {
+            return m_isDone;
+        }
+        
         public Object GetAsset()
         {
             return m_asset;
@@ -47,6 +59,31 @@ namespace AssetBundleRes
                 m_isDone = true;
             }
 
+        }
+    }
+
+    public class AssetLoadOptionEditor : ILoadOption
+    {
+        private Object m_asset;
+        
+        public AssetLoadOptionEditor(Object asset)
+        {
+            m_asset = asset;
+        }
+
+        public bool IsDone()
+        {
+            return true;
+        }
+
+        public void Update()
+        {
+            
+        }
+
+        public Object GetAsset()
+        {
+            return m_asset;
         }
     }
 }
