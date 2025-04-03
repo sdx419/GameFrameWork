@@ -19,7 +19,6 @@ namespace Main
             }
         }
         
-
         private static T m_instance;
     }
 
