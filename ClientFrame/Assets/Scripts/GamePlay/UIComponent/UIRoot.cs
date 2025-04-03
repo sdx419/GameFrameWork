@@ -24,6 +24,7 @@ public class UIRoot : MonoBehaviour
     
     void Start()
     {
+        
     }
 
     [ContextMenu("testShow")]
