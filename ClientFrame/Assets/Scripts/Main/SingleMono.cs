@@ -18,6 +18,7 @@ namespace Main
                 return m_instance;
             }
         }
+        
 
         private static T m_instance;
     }
