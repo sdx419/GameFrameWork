@@ -46,6 +46,7 @@ public class Test : MonoBehaviour
 
     IEnumerator LoadBundleAsync()
     {
+        // 遴选2
         string bundlePath = Application.streamingAssetsPath + "/assets/prefab";
         AssetBundleCreateRequest request = AssetBundle.LoadFromFileAsync(bundlePath);
         yield return request;
