@@ -260,9 +260,9 @@ for(int i = 0; i < 5; i++)
 - \sum， \prod，\int                 %求和，乘积，积分
 - \frac{分子}{分母}                      %分数
 - \sqrt{表达式}                            %平方根
-- \sqrt\[n]{表达式}                       %n次方
+- \sqrt\[n]{表达式}                       %n次根
 
-## 行内公式与块级公式
+## 公式
 
 ### 行内公式
 **使用美元符号$包围LaTex公式，可以在行内显示公式效果。**例如：
@@ -307,3 +307,65 @@ $$
 2. 用\begain{align} 和 \end{align}来标记对齐的开始和结束
 3. 用双反斜杠\\\\将公式划分到每一行
 4. 每一行用&来标记对齐的位置。如上述三个公式，第一个公式的对齐位置为等号的左侧，第二个公式对齐的位置为公式的开头，第三个公式对齐的位置为a的右侧。
+
+## 数学符号
+### 基本运算符号
+- 加减乘除：+，-，\times，\div
+- 分数：\frac{分子}{分母}
+- n次平方根：\sqrt\[n]{表达式}
+- 指数：x^2
+
+### 比较符号
+- 等号，不等号，恒等号：=，\neq，\equiv $\rightarrow$ =，$\neq$， $\equiv$
+- 大小：>，<，\leq，\geq， $\rightarrow$ >，<，$\leq$， $\geq$
+- 约等于：\approx，\sim，$\rightarrow$  $\approx$， $\sim$
+
+### 集合符号
+- 属于：\in，\notin， $\rightarrow$ $\in$， $\notin$
+- 包含：\subset，\supset，$\rightarrow$ $\subset$，$\supset$
+- 交并：\cap，\cup $\rightarrow$ $\cap$, $\cup$
+- 空集：\emptyset $\rightarrow$ $\emptyset$
+
+### 希腊符号
+==只需将希腊字母的LaTex表达式的首字母大写，即可得到该希腊字母的大写形式。如：\Sigma $\rightarrow$ $\Sigma$ 。==不过受编辑器的影响，不一定能显示成功。
+
+|    希腊字母    | LaTex    | 希腊字母      | LaTex   |
+| :--------: | -------- | --------- | ------- |
+|  $\alpha$  | \alpha   | $\lambda$ | \lambda |
+|  $\beta$   | \beta    | $\mu$     | \mu     |
+|  $\gamma$  | \gamma   | $\pi$     | \pi     |
+|  $\delta$  | \delta   | $\rho$    | \rho    |
+| $\epsilon$ | \epsilon | $\sigma$  | \sigma  |
+|  $\theta$  | \theta   | $\phi$    | \phi    |
+|            |          | $\omega$  | \omega  |
+
+### 数学函数和符号
+- 三角函数：\sin，\cos，\tan $\rightarrow$ $\sin$，$\cos$，$\tan$
+- 对数：\log，\ln $\rightarrow$ $\log$， $\ln$
+- 极限：\lim_{x \to 0} $\rightarrow$ $\lim_{x \to 0}$ 
+- 求和：\sum_{i=1}^{n} $\rightarrow$  $\sum_{i = 1}^{n}$
+- 积分：\int_{a}{b} $\rightarrow$ $\int_{a}{b}$ 
+- 无穷：\infty $\rightarrow$ $\infty$
+
+### 矩阵
+使用matrix来表示矩阵，其语法格式为：
+>1. 最外层为两个双美元符号\$\$
+>2. 然后中间通过\begin{pmatrix} 和 \end{pmatrix}表示矩阵的开始和结束
+>3. 然后内层通过&符号将矩阵的每一个元素隔开，通过双反斜杠\\\\将矩阵换行。
+
+==需要注意的是，pmatrix显示为圆括号，bmatrix显示为方括号，vmatrix表示行列式。==
+
+例如以下矩阵表示方式的渲染结果为。
+\$\$
+\begin{pmatrix}
+a & b \\\\
+c d\times f & f \\\\
+\end{pmatrix}
+\$\$
+
+$$
+\begin{vmatrix}
+a & b\\
+c d\times f & f \\
+\end{vmatrix}
+$$
